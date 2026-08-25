@@ -70,3 +70,5 @@ Model: baseline_640_smoke (5 epochs, imgsz=640) | Val: VisDrone-2k full val (548
  awning-tricycle: 426
              bus: 157
            motor: 4059
+
+Note: detected+misclassified (14,480) equals the class-agnostic detected count in size_sensitivity.csv — the two tools cross-validate.
