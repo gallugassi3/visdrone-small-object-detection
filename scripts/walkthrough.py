@@ -3,11 +3,16 @@
 Runs the trained model on a single val image and prints every step the
 evaluator performs: predictions sorted by confidence, greedy IoU matching,
 the TP/FP/FN verdict for each box, and the resulting precision/recall.
-Saves walkthrough.png with color-coded boxes:
-  green = TP, red = FP, orange dashed = FN (missed ground truth).
+
+Saves walkthrough.png with color-coded, labeled boxes for full traceability
+between the printed table and the image:
+  green  "P3>G7"  = prediction #3 (table row 3) matched ground-truth box G7
+  red    "P6"     = prediction #6 is a false positive
+  orange "G4"     = ground-truth box 4 was missed (false negative)
 
 Usage:
-    python walkthrough.py [image_path]
+    Usage:
+    python -m scripts.walkthrough [image_path]
 """
 import sys
 from pathlib import Path
@@ -24,7 +29,9 @@ DEFAULT_IMAGE = Path("datasets/VisDrone-2k/images/val/0000021_00500_d_0000002.jp
 CONF_THRESHOLD = 0.25
 IOU_THRESHOLD = 0.5
 
-GREEN, RED, ORANGE = (80, 200, 80), (60, 60, 230), (0, 165, 255)
+GREEN, GREEN_TAG = (80, 200, 80), (30, 130, 30)
+RED = (60, 60, 230)
+ORANGE, ORANGE_TAG = (0, 165, 255), (0, 130, 200)
 
 
 def dashed_rect(img, p1, p2, color, dash=8):
@@ -37,6 +44,15 @@ def dashed_rect(img, p1, p2, color, dash=8):
     for y in range(y1, y2, dash * 2):
         cv2.line(img, (x1, y), (x1, min(y + dash, y2)), color, 2)
         cv2.line(img, (x2, y), (x2, min(y + dash, y2)), color, 2)
+
+
+def label(img, text: str, x: int, y: int, color) -> None:
+    """Small solid tag above a box corner, readable on any background."""
+    (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
+    ty = max(y - 4, th + 4)
+    cv2.rectangle(img, (x, ty - th - 4), (x + tw + 6, ty + 2), color, -1)
+    cv2.putText(img, text, (x + 3, ty - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.45,
+                (255, 255, 255), 1, cv2.LINE_AA)
 
 
 def main() -> None:
@@ -60,7 +76,7 @@ def main() -> None:
     print(f"\nImage: {image_path.name} | GT objects: {len(gt_boxes)} | "
           f"predictions at conf>={CONF_THRESHOLD}: {len(pred_boxes)}\n")
     print(f"{'#':>3} {'conf':>5} {'class':>12} {'best IoU':>8}  verdict")
-    print("-" * 55)
+    print("-" * 60)
 
     tp = fp = 0
     for p in range(len(pred_boxes)):
@@ -72,27 +88,35 @@ def main() -> None:
         if len(candidates) == 0:
             fp += 1
             reason = "duplicate (GT already taken)" if best_iou >= IOU_THRESHOLD else "miss (no GT overlap)"
-            print(f"{p+1:>3} {pred_conf[p]:>5.2f} {name:>12} {best_iou:>8.2f}  FP - {reason}")
+            print(f"{p+1:>3} {pred_conf[p]:>5.2f} {name:>12} {best_iou:>8.2f}  FP [P{p+1}] - {reason}")
             cv2.rectangle(img, (x1, y1), (x2, y2), RED, 2)
+            label(img, f"P{p+1}", x1, y1, RED)
         else:
             g = candidates[ious[p, candidates].argmax()]
             gt_taken[g] = True
             tp += 1
-            print(f"{p+1:>3} {pred_conf[p]:>5.2f} {name:>12} {best_iou:>8.2f}  TP - matched GT#{g} ({CLASS_NAMES[gt_cls[g]]})")
+            print(f"{p+1:>3} {pred_conf[p]:>5.2f} {name:>12} {best_iou:>8.2f}  TP [P{p+1}>G{g}] - matched GT#{g} ({CLASS_NAMES[gt_cls[g]]})")
             cv2.rectangle(img, (x1, y1), (x2, y2), GREEN, 2)
+            label(img, f"P{p+1}>G{g}", x1, y1, GREEN_TAG)
 
     fn = int((~gt_taken).sum())
     for g in np.where(~gt_taken)[0]:
         x1, y1, x2, y2 = gt_boxes[g].astype(int)
-        dashed_rect(img, (max(x1, 0), max(y1, 0)), (min(x2, img_w - 1), min(y2, img_h - 1)), ORANGE)
+        cx1, cy1 = max(x1, 0), max(y1, 0)
+        cx2, cy2 = min(x2, img_w - 1), min(y2, img_h - 1)
+        dashed_rect(img, (cx1, cy1), (cx2, cy2), ORANGE)
+        label(img, f"G{g}", cx1, cy1, ORANGE_TAG)
 
     precision = tp / (tp + fp) if tp + fp else 1.0
     recall = tp / (tp + fn) if tp + fn else 1.0
-    print("-" * 55)
+    print("-" * 60)
     print(f"\nTP={tp}  FP={fp}  FN={fn}")
     print(f"Precision = {tp}/({tp}+{fp}) = {precision:.2f}")
     print(f"Recall    = {tp}/({tp}+{fn}) = {recall:.2f}")
-    print("\nLegend in walkthrough.png: green=TP, red=FP, orange dashed=FN (missed GT)")
+    print("\nLegend in walkthrough.png:")
+    print("  green 'P3>G7'   = prediction row #3 matched ground-truth box G7 (TP)")
+    print("  red   'P6'      = prediction row #6, false positive")
+    print("  orange 'G4'     = ground-truth box 4, missed (FN)")
 
     cv2.imwrite("walkthrough.png", img)
     print("Saved: walkthrough.png")
