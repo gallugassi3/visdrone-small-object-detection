@@ -3,6 +3,5 @@ datasets/
 runs/
 __pycache__/
 *.pt
-
 output.png
 comparisons/

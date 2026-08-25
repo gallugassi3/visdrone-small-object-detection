@@ -1,0 +1,72 @@
+Model: baseline_640_smoke (5 epochs, imgsz=640) | Val: VisDrone-2k full val (548 img) | conf=0.25, IoU=0.5
+...100/548 images
+...200/548 images
+...300/548 images
+...400/548 images
+...500/548 images
+
+=== Outcome summary (548 val images, 38759 GT boxes) ===
+       detected: 12032 (31.0% of GT)
+  misclassified: 2448 (6.3% of GT)
+         missed: 24279 (62.6% of GT)
+ false_positive: 5749
+
+=== Top confusions (GT -> predicted) ===
+                      van->car: 822
+            people->pedestrian: 498
+             motor->pedestrian: 254
+                    truck->car: 127
+                 people->motor: 83
+                      car->van: 70
+          awning-tricycle->car: 68
+                 motor->people: 62
+                 tricycle->car: 62
+           bicycle->pedestrian: 59
+               tricycle->motor: 58
+             pedestrian->motor: 34
+            pedestrian->people: 30
+                    truck->van: 29
+                bicycle->motor: 28
+                      bus->car: 24
+                    bus->truck: 17
+     awning-tricycle->tricycle: 14
+               pedestrian->car: 14
+        awning-tricycle->motor: 12
+                    motor->car: 11
+               car->pedestrian: 8
+                    truck->bus: 6
+                    van->truck: 5
+                    car->motor: 5
+          tricycle->pedestrian: 5
+                    car->truck: 4
+               motor->tricycle: 4
+          awning-tricycle->van: 4
+               bicycle->people: 4
+               truck->tricycle: 4
+                 car->tricycle: 3
+                motor->bicycle: 3
+   awning-tricycle->pedestrian: 2
+                 tricycle->van: 2
+                      bus->van: 2
+     tricycle->awning-tricycle: 2
+                      car->bus: 1
+        awning-tricycle->truck: 1
+              people->tricycle: 1
+                      van->bus: 1
+                  bicycle->car: 1
+               tricycle->truck: 1
+                   car->people: 1
+              tricycle->people: 1
+                 van->tricycle: 1
+
+=== Misses by class ===
+      pedestrian: 6594
+          people: 4345
+         bicycle: 1195
+             car: 5227
+             van: 900
+           truck: 491
+        tricycle: 885
+ awning-tricycle: 426
+             bus: 157
+           motor: 4059
