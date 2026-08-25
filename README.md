@@ -81,3 +81,9 @@ _Sections below fill in after the resolution experiment:_ failure cases the
 1024 model still misses, tiling/SAHI as the production-scale alternative to
 raw resolution, P2 head trade-offs, and per-class strategies the resolution
 lever cannot fix (rare-class confusion needs data, not pixels).
+
+One augmentation hypothesis was already tested and rejected: vertical flip
+sounds natural for aerial imagery, but a 100-image viewpoint study showed only
+~49% of frames are near-nadir — for the rest, flipud creates impossible images
+and erases the posture cue separating pedestrian from people. Measured, not
+guessed (see `analysis/flipud_notes.md`).
