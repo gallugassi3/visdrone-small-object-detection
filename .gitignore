@@ -4,4 +4,4 @@ runs/
 __pycache__/
 *.pt
 
-output.jpg
+output.png
