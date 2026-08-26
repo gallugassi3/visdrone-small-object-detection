@@ -43,11 +43,11 @@ Ran the full 80 epochs; best ep79 (0.370), flat from ep70 — converged.
 **Headline: mAP50 +43% (0.258→0.370) on identical data and training budget.** mAP50-95 rose
 relatively more (+52%): boxes are both found more often and localized better.
 
-Per-class ΔmAP50 (from the official comparison):
+Per-class ΔmAP50 (from the official comparison file's delta column):
 
-| motor | pedestrian | van | bus | people | truck | car | bicycle | tricycle | awning-tri. |
+| motor | pedestrian | van | bus | truck | people | car | bicycle | tricycle | awning-tri. |
 |---|---|---|---|---|---|---|---|---|---|
-| +0.166 | +0.161 | +0.126 | +0.123 | +0.113 | +0.111 | +0.100 | +0.077 (×2.6) | +0.076 | +0.057 |
+| +0.166 | +0.161 | +0.126 | +0.123 | +0.113 | +0.113 | +0.099 | +0.077 (×2.6) | +0.076 | +0.058 |
 
 - **Reading the ranking honestly:** the two smallest-object classes lead, but class ordering is
   not strictly by size — class is a noisy proxy for object size. The strictly size-ranked gain
@@ -59,7 +59,7 @@ Per-class ΔmAP50 (from the official comparison):
 
   The unchanged >64px bucket is a perfect internal control: objects already above the
   threshold gained nothing because they had nothing to gain.
-- Overall class-agnostic detection: 46.4%→58.9%.
+- Overall class-agnostic detection: 46.4%→58.9%. car crosses 0.8 (0.700→0.800).
 - **Cost:** inference 1.6→6.9ms (×4.3) — the measured price of the resolution lever.
 - **New bottleneck exposed:** vs the real baseline, FP rises 7.7k→8.8k (+14%) and
   misclassification share grows 6.3%→8.4%, with newly symmetric twin-class confusion
@@ -82,8 +82,10 @@ may compensate).
 - **Optimizer pinned to SGD lr0=0.01** — optimizer=auto switches by iteration count and would
   confound runs of different lengths.
 - **Headline metric: mAP50** (mAP50-95 double-penalizes small objects for identical pixel errors).
-- **Official numbers come from scripts/compare_runs.py only**; results.csv at the best epoch
-  agrees. Never mix end-of-training console tables with compare_runs outputs.
+- **Official numbers come from scripts/compare_runs.py only**; per-class deltas are quoted from
+  its delta column (computed from unrounded values — subtracting the rounded columns can drift
+  by 0.001). results.csv at the best epoch agrees. Never mix end-of-training console tables
+  with compare_runs outputs.
 - **Size buckets are always computed at the 640 scale** for both models — same objects, same
   buckets; only the model changes.
 - **Greedy IoU matching is a documented lower bound** (adversarial test in
