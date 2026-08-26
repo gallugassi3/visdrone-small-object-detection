@@ -148,6 +148,7 @@ python train.py                   # 640 baseline (~2h on RTX 3070 Laptop)
 python train_1024.py              # the experiment (~4.5h)
 python scripts/compare_runs.py baseline_640_2k highres_1024_2k
 python -m scripts.walkthrough     # watch one image get matched, step by step
+# Or skip training: download trained weights from the Releases page
 ```
 
 ## Repository guide
