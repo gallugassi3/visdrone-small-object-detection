@@ -35,8 +35,9 @@ model's problem is seeing, not understanding.
 
 If sub-stride invisibility is the dominant failure, raising input resolution
 (imgsz 640 → 1024) should lift the recall ceiling for small classes — each
-object gets 1.6x more pixels, shifting a large share of the <8px bucket above
-the stride. We train two otherwise-identical YOLO11n models and compare.
+object gets 1.6x more pixels per side (2.56x more pixels), shifting a large
+share of the <8px bucket above the stride. We train two otherwise-identical
+YOLO11n models and compare.
 
 Controls: same 2,000-image train subset (random, seed=42), full val set, SGD
 lr0=0.01 pinned (Ultralytics' `optimizer=auto` silently switches optimizers by
@@ -48,7 +49,8 @@ point.
 ## Dataset
 
 [VisDrone-DET](https://github.com/VisDrone/VisDrone-Dataset): 8,629 drone
-images, 10 classes, ~471K boxes. Notable properties we measured and work with:
+images, 10 classes, ~457K boxes after conversion (ignored-region and "others"
+annotations dropped). Notable properties we measured and work with:
 
 - **Extreme density:** median 42 objects/image, max 902.
 - **Extreme imbalance:** car is 42% of boxes; awning-tricycle under 1% (45:1).
