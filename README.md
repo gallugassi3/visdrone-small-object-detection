@@ -101,14 +101,19 @@ Honesty section — what the resolution lever did **not** fix:
    thin geometry, 3% frequency, and the rider stealing the detection compound each other
    (full cases with images: [`analysis/failure_cases_1024.md`](analysis/failure_cases_1024.md)).
 
-One augmentation hypothesis was tested and **rejected by measurement**: vertical flip sounds
-natural for aerial imagery, but a 100-image viewpoint study showed only ~49% of frames are
-near-nadir — for the rest, `flipud` creates impossible images and erases the posture cue
-separating `pedestrian` from `people` (see [`analysis/flipud_notes.md`](analysis/flipud_notes.md)).
+Two follow-up hypotheses were then **settled by measurement** rather than intuition:
 
-A follow-up experiment (`scale` augmentation 0.5 → 0.2 at 1024, testing whether default
-zoom-out destroys already-tiny objects) is training now — results land in
-[`EXPERIMENTS.md`](EXPERIMENTS.md).
+- **Vertical flip (`flipud`) — rejected before running:** it sounds natural for aerial
+  imagery, but a 100-image viewpoint study showed only ~49% of frames are near-nadir — for
+  the rest, flipping creates impossible images and erases the posture cue separating
+  `pedestrian` from `people` (see [`analysis/flipud_notes.md`](analysis/flipud_notes.md)).
+- **Gentler scale augmentation (0.5 → 0.2 at 1024) — ran, and came back
+  null-to-slightly-negative (best 0.368 vs 0.370):** tiny-object *detection* rose slightly
+  in the predicted buckets, but it traded away larger-bucket detection and full-sweep
+  recall — the augmentation both destroys and rescues small objects, and the effects
+  roughly cancel. Bonus: both 1024 runs beat 640 by the same margin (+0.110/+0.111), so
+  **the +43% is reproduced across two independent runs**, not seed luck. Full analysis in
+  [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 ## Dataset notes
 
@@ -169,6 +174,8 @@ python -m scripts.walkthrough     # watch one image get matched, step by step
 - Two measurement protocols coexist deliberately: detection-rate tools run at conf=0.25
   (the operating point), while mAP runs the full confidence sweep — never compare across
   them. All numbers are val-set; the official test split remains untouched.
+- Speed numbers require a matched protocol: architecture-identical models measured under
+  different GPU load report different ms/image — we quote the conservative measurement.
 - Greedy IoU matching in the analysis tools is a documented lower bound (adversarial test in
   [`analysis/logic_review.md`](analysis/logic_review.md)); it matches COCO-style behavior and
   biases both models equally.
@@ -176,7 +183,8 @@ python -m scripts.walkthrough     # watch one image get matched, step by step
   ([`analysis/repo_review.md`](analysis/repo_review.md) — 9 blockers found and fixed) and an
   adversarial logic verification of every measurement tool (zero bugs; every claim tested
   against hand-computed synthetic cases). The README itself passed the same treatment
-  ([`analysis/readme_review.md`](analysis/readme_review.md)).
+  ([`analysis/readme_review.md`](analysis/readme_review.md)), and the Run-4 write-up a
+  final one ([`analysis/run4_review.md`](analysis/run4_review.md)).
 - `optimizer=auto` was caught silently switching AdamW/SGD by run length — SGD lr0=0.01 is
   pinned across all experiments for comparability.
 
@@ -189,7 +197,11 @@ Ranked by expected return, grounded in the literature on VisDrone small-object d
 1. **P2 detection head** (stride 4) — the most consistent structural lever in recent
    VisDrone work; same medicine as resolution, but architectural and cheaper at inference.
 2. **Class rebalancing / more rare-class data** — the new bottleneck is lookalike
-   discrimination, which resolution cannot fix.
+   discrimination, which resolution cannot fix. Copy-paste augmentation is the literature's
+   lever for rare classes, but two caveats fit this project exactly: Ultralytics supports it
+   only for segmentation labels, and recent work finds nano-scale models overfit to its
+   pasting artifacts — so for this stack the honest path is real data or oversampling, not
+   synthetic pasting.
 3. **Tiling (SAHI-style)** for production-scale images — resolution cost grows quadratically;
    tiling caps it.
 

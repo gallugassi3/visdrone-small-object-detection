@@ -7,7 +7,7 @@ Every training run gets a row; details and conclusions live in the sections belo
 | 1 | baseline_640_smoke | — (pipeline check: full train, 5 ep, optimizer=auto) | 0.206 | 0.114 | ~8.5 min |
 | 2 | baseline_640_2k | 2k subset, 80 ep, SGD pinned, batch=16 | 0.258 | 0.142 | ~1:25 |
 | 3 | highres_1024_2k | imgsz 640→1024, batch=6 | **0.370** | **0.216** | ~3:20 |
-| 4 | lowscale_1024_2k | scale aug 0.5→0.2 | TBD | TBD | ~3:20 |
+| 4 | lowscale_1024_2k | scale aug 0.5→0.2 | 0.368 | 0.214 | ~2:15 |
 
 Official metrics: `scripts/compare_runs.py` (unified val protocol on best.pt).
 
@@ -66,12 +66,37 @@ Per-class ΔmAP50 (from the official comparison file's delta column):
   (motor↔bicycle 134:134, pedestrian→people 30→263). The model now sees enough pixels
   to hesitate between lookalikes — a problem resolution cannot fix.
 
-## Run 4 — lowscale_1024_2k (running)
+## Run 4 — lowscale_1024_2k: null-to-slightly-negative, and a lesson in reading it honestly
 
-Single variable vs Run 3: scale augmentation 0.5→0.2. **Hypothesis:** random downscaling by
-up to 2x pushes already-tiny objects below assignment; gentler scaling should preserve more
-of the <8px bucket during training. A null result is also informative (mosaic/scale interplay
-may compensate).
+Single variable vs Run 3: scale augmentation 0.5→0.2. Full 80 epochs, 2.99h (wall-clock
+helped by fixing a thermal power cap mid-run — epoch time steps ~370s→~85s at ep16/17).
+
+**Headline: best-vs-best 0.368 vs 0.370 (−0.002); plateau-vs-plateau (last-10 mean) 0.359
+vs 0.366 (−0.007).** Effectively null, leaning slightly negative. Notably the close_mosaic
+tail that lifted Run 3 (+0.006) did nothing here — a −0.011 step at ep71 never recovered,
+and train-cls kept falling while val-cls flattened: a mild late overfit signature under
+scale=0.2 with mosaic off.
+
+The two measurement layers still disagree instructively, but both directions must be told:
+class-agnostic detection at conf=0.25 *rose* +0.8pt (58.9%→59.7%; <8px 28.4%→28.8%,
+8-16px 62.1%→63.8% — the predicted buckets), **at the cost of the larger buckets**
+(32-64px −0.9pt, >64px −0.8pt; net +315 boxes = +341 small found minus 26 large lost).
+Meanwhile the official full-sweep recall *fell* 0.393→0.381 with precision up 0.490→0.512
+— the two protocols moved in opposite directions, which is exactly why we never mix them.
+
+Per-class: pedestrian −0.015 (0.441→0.426) is the predicted loser; the evidence-backed
+explanation is twin migration — pedestrian→people confusion rose 0.03→0.05 in the matrix —
+with "lost zoom-in rescue" as a plausible but unevidenced second factor. van −0.021 is the
+largest single move (within its noise band). tricycle +0.014 and bus +0.001 sit on classes
+our standing decision marks as too noisy for sub-1pt conclusions — reported, not claimed.
+
+**Conclusion:** restraining scale trades a small tiny-object detection gain for ranking/
+recall quality elsewhere; at 1024 the net is zero-to-slightly-negative. Augmentation tuning
+at this magnitude is second-order next to the input-resolution lever — measured, not assumed.
+
+**Bonus finding:** both 1024 runs beat the 640 baseline by nearly identical margins
+(+0.110 / +0.111 mAP50) — **the +43% resolution result is reproduced across two independent
+runs**, not seed luck.
 
 ---
 
@@ -91,6 +116,9 @@ may compensate).
 - **Greedy IoU matching is a documented lower bound** (adversarial test in
   analysis/logic_review.md); it matches COCO-style behavior and biases both models equally,
   so deltas are unaffected.
+- **Speed numbers require a matched protocol:** the 3.1ms measured for Run 4 ran on an idle,
+  uncapped GPU while the 6.9ms for Run 3 ran on a loaded one — architecture is bit-identical,
+  so we quote the conservative 6.9ms and never compare speeds across measurement conditions.
 - **Known data quirks:** 2,597 train boxes extend past borders (converter does not clip);
   4 duplicate labels auto-removed; per-class AP for bus/tricycle/awning-tricycle is noisy
   (251–1,045 val instances) — deltas under ~1 mAP there are not meaningful.
@@ -99,9 +127,12 @@ may compensate).
 
 - ~~Does resolution lift the recall ceiling for tiny classes?~~ **Answered by Run 3:**
   pedestrian ceiling 0.48→0.65; <8px detection doubled.
-- **Lookalike discrimination is the new dominant bottleneck** (motor↔bicycle 134:134).
-  Levers: class rebalancing, more rare-class data. Resolution won't fix this.
-- bicycle: ×2.6 but still second-worst (0.124, after awning-tricycle 0.116) — rarity +
+- ~~Does scale=0.5 waste part of the resolution gain?~~ **Answered by Run 4:** no net effect —
+  its destroy and rescue sides cancel at 1024; augmentation tuning here is second-order.
+- **Lookalike discrimination is the new dominant bottleneck** (motor↔bicycle 134:134,
+  bicycle→motor 0.14 in both 1024 runs). Literature lever: copy-paste for rare classes —
+  but Ultralytics supports it only for segmentation labels, and recent work finds nano-scale
+  models overfit to pasting artifacts. Honest path for this stack: real data or oversampling.
+- bicycle: ×2.6 but still second-worst (0.124–0.127 across both 1024 runs) — rarity +
   thinness + rider-steals-detection all still in play.
-- Does scale=0.5 waste part of the resolution gain? (Run 4, landing)
 - van→car eased at 1024 (0.46→0.40) but remains the largest single confusion.

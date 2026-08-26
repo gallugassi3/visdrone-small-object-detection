@@ -1,0 +1,21 @@
+Validation: data=visdrone2k.yaml split=val, each model at its own training imgsz
+
+                     baseline_640_2k  lowscale_1024_2k       delta (B-A)
+                         (imgsz=640)      (imgsz=1024)
+------------------------------------------------------------------------
+precision                      0.380             0.512            +0.132
+recall                         0.300             0.381            +0.080
+mAP50                          0.258             0.368            +0.110
+mAP50-95                       0.142             0.214            +0.072
+
+per-class mAP50
+pedestrian                     0.280             0.426            +0.146
+people                         0.206             0.316            +0.110
+bicycle                        0.047             0.130            +0.083
+car                            0.700             0.789            +0.089
+van                            0.282             0.387            +0.105
+truck                          0.210             0.317            +0.107
+tricycle                       0.152             0.242            +0.090
+awning-tricycle                0.058             0.125            +0.067
+bus                            0.367             0.512            +0.145
+motor                          0.280             0.439            +0.159
