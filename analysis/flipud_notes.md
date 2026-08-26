@@ -12,8 +12,8 @@ Per-image labels: `analysis/flipud_sample_labels.csv`.
 | steep oblique       | no horizon or sky, but facades and a clear far-at-top perspective |    30 |
 | oblique w/ horizon  | sky, skyline, or hills visible                                    |    21 |
 
-Under the two-class rule from the earlier discussion (oblique = horizon **or** facades visible):
-**nadir 49 : oblique 51**. The nadir/steep-oblique boundary is subjective; ±10 images either way
+Under the two-class rule from the earlier discussion (oblique = horizon or facades visible):
+nadir 49 : oblique 51. The nadir/steep-oblique boundary is subjective; ±10 images either way
 would not change the conclusion.
 
 Caveats
@@ -21,7 +21,7 @@ Caveats
   (12 sequences had mixed labels, typically nadir vs steep-oblique). The effective sample is
   closer to 48 than 100.
 - A sky-fraction heuristic (bright/low-saturation or bluish pixels in the top 15 %) found
-  17 of the 21 horizon images but had 21 false alarms on night scenes and bright pavement —
+  17 of the 21 horizon images but had 21 false alarms on night scenes and bright pavement,
   not reliable enough to automate the split without a better feature.
 
 ## Why this matters for a vertical flip
@@ -44,14 +44,14 @@ cue the model would otherwise learn. Pedestrian/people are 31 % of all boxes.
 ## Conclusion
 
 **Not defensible as a default at 0.5 for this dataset.** The reasoning that makes `flipud`
-harmless — "drone footage has no canonical up" — holds for only about half of VisDrone-2k.
+harmless, "drone footage has no canonical up", holds for only about half of VisDrone-2k.
 This is the same reason `degrees` (rotation) stays at 0.
 
 If it is tested at all, treat it as an ablation, not a baseline setting:
-- use a low probability (0.1–0.2) rather than 0.5, so the impossible-image rate stays small;
+- use a low probability (0.1-0.2) rather than 0.5, so the impossible-image rate stays small;
 - judge it on per-class AP for `pedestrian` and `people`, the most orientation-sensitive
   classes, not on overall mAP alone;
-- the principled version — flip only nadir sequences — would need a per-sequence viewpoint
+- the principled version, flipping only nadir sequences, would need a per-sequence viewpoint
   label, which Ultralytics' augmentation pipeline does not support without custom code.
 
 No training scripts were modified.

@@ -14,12 +14,12 @@ Reading the images (`assets/failure_case_*.png`): solid boxes with a class and c
 the model's predictions (`result.plot()`). **Orange dashed** = GT box nothing matched (miss).
 **Magenta box with `GT:<class>`** = matched, but with the wrong class.
 
-## 1. `failure_case_1.png` — small objects: the remaining bottleneck
+## 1. `failure_case_1.png`: small objects, the remaining bottleneck
 
 `0000295_01000_d_0000026.jpg` (1360x765). 251 GT boxes, 170 of them `<8px` at the 640 scale
 (that is, under ~17 px on the original image, ~13 px on the 1024 network input).
 
-- 108 predictions, **175 misses, 147 of which are `<8px`**. 3 misclassified, 32 false positives.
+- 108 predictions, 175 misses, 147 of which are `<8px`. 3 misclassified, 32 false positives.
 - Misses by class: car 68, pedestrian 62, bicycle 21, people 11, motor 6, van 4, bus 3.
 - The orange dashes pile up past the overpass, where traffic and pedestrians recede toward the
   vanishing point, and along the far left sidewalk. The model is confident on everything in the
@@ -31,13 +31,13 @@ This is the `<8px` bucket from the size-sensitivity table (28.4 % detection rate
 Going 640 -> 1024 doubled that rate, but the objects here are still 1-2 cells wide at stride 8,
 so more resolution, a P2 head, or tiling is the lever, not more epochs.
 
-## 2. `failure_case_2.png` — awning-tricycle: zero for eighteen
+## 2. `failure_case_2.png`: awning-tricycle, zero for eighteen
 
 `0000215_00909_d_0000258.jpg` (1360x765). 93 GT boxes, only 16 tiny, but 18 awning-tricycles
 parked in the lot at the top of the frame.
 
 - 85 predictions, 30 misses (7 tiny), 8 misclassified, 22 false positives.
-- **Awning-tricycle: 18 GT, 15 missed, 3 misclassified (2 -> motor, 1 -> car), 0 correct.**
+- Awning-tricycle: 18 GT, 15 missed, 3 misclassified (2 -> motor, 1 -> car), 0 correct.
   The objects are not small (they are larger than the pedestrians the model does find next to
   them); the class is simply not learned. Cars in the same lot are found at 0.8+.
 - Also visible: `van -> car` twice, the most common confusion in the whole val set.
@@ -46,12 +46,12 @@ awning-tricycle has the lowest per-class mAP50 of the run, 0.116 (0.058 at 640).
 motor/tricycle with a canopy; at 0.25 conf the model either suppresses it or calls it the
 nearest common class.
 
-## 3. `failure_case_3.png` — wrong classes on the vehicle family
+## 3. `failure_case_3.png`: wrong classes on the vehicle family
 
 `0000244_01500_d_0000004.jpg` (960x540, the smallest source image of the three). 96 GT boxes,
 14 awning-tricycles, and a row of parked tricycles bottom-left.
 
-- 68 predictions, 44 misses, **17 misclassified** (the highest of the 12 shortlisted), 16 false
+- 68 predictions, 44 misses, 17 misclassified (the highest of the 12 shortlisted), 16 false
   positives.
 - Confusions: awning-tricycle -> car 3, tricycle -> car 3, truck -> car 2, van -> truck 2,
   van -> car 2, bus -> truck 2, awning-tricycle -> van 1, car -> van 1, car -> awning-tricycle 1.
